@@ -37,7 +37,6 @@ public class Pipe {
             }
         };
 
-        /*TO DO fazer o stream genérico para qualquer tipo de entrada*/
         source
                 //.filter((key,value) -> value.length() < 3).
                 .flatMapValues(value -> Arrays.asList(value.toLowerCase().split(",")))
@@ -69,7 +68,7 @@ public class Pipe {
        // builder.table("treams-lt-input").mapValues((k,v) -> v).print(Printed.toSysOut());
 
         final KafkaStreams streams = new KafkaStreams(topology,prop);
-        final CountDownLatch latch = new CountDownLatch(1);
+        //final CountDownLatch latch = new CountDownLatch(1);
 
         streams.start();
         // attach shutdown handler to catch control-c

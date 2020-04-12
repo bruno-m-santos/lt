@@ -1,14 +1,18 @@
 package lt.samples;
 
+import lt.Serializers.MovieDeserializer;
+import lt.Serializers.MovieSerializer;
+import lt.avro.Movie;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.kstream.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.Arrays;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 
 public class PipeMovie {
 
@@ -18,33 +22,33 @@ public class PipeMovie {
         prop.put(StreamsConfig.APPLICATION_ID_CONFIG, "LT-streams");
         prop.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
         prop.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        prop.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.ByteArray().getClass());
+        prop.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         final StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, byte[]> source = builder.stream("streams-lt-input");
+        Serde<String> stringSerdes = Serdes.String();
+        Serde<byte[]> byteArraySerdes = Serdes.ByteArray();
 
-        source
-//            .flatMapValues(value -> {
-//                ByteArrayInputStream in = new ByteArrayInputStream(value.clone());
-//                ObjectInputStream is = null;
-//                try {
-//                    is = new ObjectInputStream(in);
-//                    return Arrays.asList(is.readObject());
-//                } catch (IOException | ClassNotFoundException e) {
-//                    e.printStackTrace();
-//                }
-//                return Arrays.asList(value);
-//            })
-//            .groupBy((k,v) -> v)
-//            .count()
-//            .toStream()
-            .to("streams-lt-output");
+        KStream<String, Movie> source = builder.stream("streams-lt-input", Consumed.with(stringSerdes,byteArraySerdes))
+                .map((key,value) -> {
+                    MovieDeserializer v = new MovieDeserializer();
+                    Object movieObj = v.deserialize("streams-lt-input", value);
+                    return KeyValue.pair(key,  Movie.newBuilder().setMovieId(((Movie) movieObj).getMovieId()).setReleaseYear(((Movie) movieObj).getReleaseYear()).setTitle(((Movie) movieObj).getTitle()).build());
+                });
+
+        KStream sourceStream = source.flatMapValues(value -> Arrays.asList(value.getTitle().toString()));
+
+        KGroupedStream grouped = sourceStream. groupBy((k, v) -> v);
+
+        KStream stream = grouped
+                .count()
+                .toStream();
+
+        stream.to("streams-lt-output", Produced.with(Serdes.String(), Serdes.Long()));
 
         final Topology topology = builder.build();
 
         final KafkaStreams streams = new KafkaStreams(topology,prop);
-        final CountDownLatch latch = new CountDownLatch(1);
 
         streams.start();
 
