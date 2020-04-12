@@ -1,12 +1,16 @@
 package lt.samples;
 
-import lt.serializers.MovieDeserializer;
+import lt.Serializers.MovieDeserializer;
+import lt.Serializers.MovieSerializer;
 import lt.avro.Movie;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
