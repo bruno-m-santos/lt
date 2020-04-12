@@ -1,20 +1,15 @@
 package lt.samples;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerializer;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
-import lt.Serializers.MovieSerializer;
+import lt.serializers.MovieSerializer;
 import lt.avro.Movie;
-import org.apache.avro.generic.GenericData;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.Properties;
 
 
